@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root version="3.0" release="1">
+  <properties>
+    <name>Feature: Advantage and disadvantage effects with automatic removal</name>
+    <version>3.3.15.1</version>
+    <author>Kelrugem</author>
+    <description>Advantage and disadvantage effects.</description>
+  </properties>
+  <announcement text="Generic Advantage/Disadvantage v3.3.15.1 for CoreRPG. \rCopyright 2020 Smiteworks.\rBy Kelrugem.\rApply the effects advantage and disadvantage to apply them to rolls." font="chatfont" />
+  <base>
+	<!-- Strings -->
+    <includefile source="strings/strings.xml" />
+	
+	<!-- Scripts -->
+	<script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
+	<script name="OptionsKel" file="scripts/data_options.lua" />
+  </base>
+</root>
