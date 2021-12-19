@@ -146,17 +146,12 @@ end
 function roll(rSource, vTargets, rRoll, bMultiTarget)
 	rRoll.originaldicenumber = #rRoll.aDice or 0;
 	if #rRoll.aDice > 0 then
-		local bAdvantage, nAdvantage = hasEffect(rSource, "keladvantage");
-		local bDisAdvantage, nDisAdvantage = hasEffect(rSource, "keldisadvantage");
+		local _, nAdvantage =  hasEffect(rSource, "keladvantage");
+		local _, nDisAdvantage =  hasEffect(rSource, "keldisadvantage");
 		
-		if bAdvantage or bDisAdvantage then
-			if nAdvantage > nDisAdvantage then
-				rRoll.adv = "true";
-			elseif nDisAdvantage > nAdvantage then
-				rRoll.disadv = "true";
-			end
-		end
-		if ( rRoll.adv == "true" ) then
+		rRoll.adv = ( tonumber(rRoll.adv) or 0 ) + nAdvantage - nDisAdvantage;
+		
+		if rRoll.adv > 0 then
 			local i = 1;
 			local slot = i + 1;
 			while rRoll.aDice[i] do
@@ -164,7 +159,7 @@ function roll(rSource, vTargets, rRoll, bMultiTarget)
 				i = i + 2;
 				slot = i+1;
 			end
-		elseif ( rRoll.disadv == "true" ) then
+		elseif rRoll.adv < 0 then
 			local i = 1;
 			local slot = i + 1;
 			while rRoll.aDice[i] do
@@ -179,7 +174,10 @@ end
 
 function resolveAction(rSource, rTarget, rRoll)
 	if #rRoll.aDice > 0 then
-		if rRoll.adv == "true" then
+		
+		rRoll.adv = tonumber(rRoll.adv) or 0;
+		
+		if rRoll.adv > 0 then
 			local i = 1;
 			local slot = i+1;
 			local sDropped = "";
@@ -210,7 +208,7 @@ function resolveAction(rSource, rTarget, rRoll)
 				EffectManager.removeEffect(nodeCT, "keladvantage");
 			end
 			rRoll.aDice.expr = nil;
-		elseif rRoll.disadv == "true" then
+		elseif rRoll.adv < 0 then
 			local i = 1;
 			local slot = i+1;
 			local sDropped = "";
@@ -262,7 +260,10 @@ function total(rRoll)
 	if rRoll.originaldicenumber then
 		rRoll.originaldicenumber = tonumber(rRoll.originaldicenumber);
 		if #rRoll.aDice > rRoll.originaldicenumber then
-			if rRoll.adv == "true" then
+		
+			rRoll.adv = tonumber(rRoll.adv) or 0;
+			
+			if rRoll.adv > 0 then
 				local i = 1;
 				local slot = i+1;
 				while corrector[i] do
@@ -274,7 +275,7 @@ function total(rRoll)
 					i = i + 1;
 					slot = i+1;
 				end
-			elseif rRoll.disadv == "true" then
+			elseif rRoll.adv < 0 then
 				local i = 1;
 				local slot = i+1;
 				while corrector[i] do
