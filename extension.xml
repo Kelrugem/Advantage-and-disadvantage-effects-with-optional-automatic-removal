@@ -5,6 +5,7 @@
     <version>3.3.15.1</version>
     <author>Kelrugem</author>
     <description>Advantage and disadvantage effects.</description>
+    <loadorder>11</loadorder>
   </properties>
   <announcement text="Generic Advantage/Disadvantage v3.3.15.1 for CoreRPG. \rCopyright 2020 Smiteworks.\rBy Kelrugem.\rApply the effects advantage and disadvantage to apply them to rolls." font="chatfont" />
   <base>
