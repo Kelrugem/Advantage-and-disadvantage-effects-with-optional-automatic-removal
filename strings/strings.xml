@@ -8,4 +8,7 @@
 <root>
 	<string name="option_header_DISADV">Effect automation</string>
 	<string name="option_label_DISADV">Automatic removal of kel(dis)advantage</string>
+	<string name="modifier_category_general">General</string>
+	<string name="modifier_label_ADV">Advantage</string>
+	<string name="modifier_label_DISADV">Disadvantage</string>
 </root>

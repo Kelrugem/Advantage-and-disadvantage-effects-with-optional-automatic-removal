@@ -1,5 +1,8 @@
 function onInit()
 	registerOptions();
+	
+	ModifierManager.addModWindowPresets({ { sCategory = "general", tPresets = { "ADV", "DISADV" } } });
+	ModifierManager.addKeyExclusionSets({ { "ADV", "DISADV" } });
 end
 
 function registerOptions()
