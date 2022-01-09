@@ -7,7 +7,7 @@
     <description>Advantage and disadvantage effects.</description>
 	<loadorder>11</loadorder>
   </properties>
-  <announcement text="Generic Advantage/Disadvantage, date 9 January 2021, for CoreRPG. Copyright 2020 Smiteworks.By Kelrugem.\rApply the effects keladvantage and keldisadvantage to apply advantage and disadvantage, respectively, to rolls." icon="DeekinMightyBard" font="emotefont" />
+  <announcement text="Generic Advantage/Disadvantage, date 9 January 2022, for CoreRPG. Copyright 2022 Smiteworks. By Kelrugem.\rApply the effects keladvantage and keldisadvantage to apply advantage and disadvantage, respectively, to rolls." icon="DeekinMightyBard" font="emotefont" />
   <base>
 	<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
 	<!-- Strings -->
