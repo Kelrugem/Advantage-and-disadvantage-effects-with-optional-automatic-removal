@@ -6,7 +6,14 @@ function hasEffect(rActor, sEffect)
 	
 	-- Iterate through each effect
 	local aMatch = {};
-	for _,v in pairs(DB.getChildren(ActorManager.getCTNode(rActor), "effects")) do
+	-- KEL Turbomanager support
+	local aEffects = {};
+	if TurboManager then
+		aEffects = TurboManager.getMatchedEffects(rActor, sEffect);
+	else
+		aEffects = DB.getChildList(ActorManager.getCTNode(rActor), "effects");
+	end
+	for _,v in ipairs(aEffects) do
 		local nActive = DB.getValue(v, "isactive", 0);
 		if nActive ~= 0 then
 			-- Parse each effect label
