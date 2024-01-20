@@ -2,12 +2,12 @@
 <root version="3.0" release="1">
   <properties>
     <name>Feature: Advantage and disadvantage effects with automatic removal</name>
-    <version>4.3.3</version>
+    <version>4.4.9</version>
     <author>Kelrugem</author>
     <description>Advantage and disadvantage effects.</description>
 	<loadorder>11</loadorder>
   </properties>
-  <announcement text="Generic Advantage/Disadvantage, date 18 February 2023, for CoreRPG. Copyright 2022 Smiteworks. By Kelrugem.\rApply the effects keladvantage and keldisadvantage to apply advantage and disadvantage, respectively, to rolls." icon="DeekinMightyBard" font="emotefont" />
+  <announcement text="Generic Advantage/Disadvantage, date 20 January 2024, for CoreRPG. Copyright 2024 Smiteworks. By Kelrugem.\rApply the effects keladvantage and keldisadvantage to apply advantage and disadvantage, respectively, to rolls." icon="DeekinMightyBard" font="emotefont" />
   <base>
 	<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
 	<!-- Strings -->
