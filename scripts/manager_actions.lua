@@ -1,330 +1,119 @@
-function hasEffect(rActor, sEffect)
-	if not sEffect or not rActor then
-		return false, 0;
-	end
-	local sLowerEffect = sEffect:lower();
-	
-	-- Iterate through each effect
-	local aMatch = {};
-	-- KEL Turbomanager support
-	local aEffects = {};
-	if TurboManager then
-		aEffects = TurboManager.getMatchedEffects(rActor, sEffect);
-	else
-		aEffects = DB.getChildList(ActorManager.getCTNode(rActor), "effects");
-	end
-	for _,v in ipairs(aEffects) do
-		local nActive = DB.getValue(v, "isactive", 0);
-		if nActive ~= 0 then
-			-- Parse each effect label
-			local sLabel = DB.getValue(v, "label", "");
-			local bTargeted = EffectManager.isTargetedEffect(v);
-			local aEffectComps = EffectManager.parseEffect(sLabel);
 
-			-- Iterate through each effect component looking for a type match
-			local nMatch = 0;
-			for kEffectComp, sEffectComp in ipairs(aEffectComps) do
-				local rEffectComp = parseEffectComp(sEffectComp);
-				-- Check conditionals
-				if rEffectComp.original:lower() == sLowerEffect then
-					nMatch = kEffectComp;
-				end
-				
-			end
-			
-			-- If matched, then remove one-off effects
-			if nMatch > 0 then
-				if nActive == 2 then
-					DB.setValue(v, "isactive", "number", 1);
-				else
-					table.insert(aMatch, v);
-					local sApply = DB.getValue(v, "apply", "");
-					if sApply == "action" then
-						EffectManager.notifyExpire(v, 0);
-					elseif sApply == "roll" then
-						EffectManager.notifyExpire(v, 0, true);
-					elseif sApply == "single" then
-						EffectManager.notifyExpire(v, nMatch, true);
-					end
-				end
-			end
-		end
-	end
-	
-	if #aMatch > 0 then
-		return true, #aMatch;
-	end
-	return false, 0;
-end
-
-function parseEffectComp(s)
-	local sType = nil;
-	local aDice = {};
-	local nMod = 0;
-	local aRemainder = {};
-	local nRemainderIndex = 1;
-	
-	local aWords, aWordStats = StringManager.parseWords(s, "%.%[%]%(%):");
-	if #aWords > 0 then
-		sType = aWords[1]:match("^([^:]+):");
-		if sType then
-			nRemainderIndex = 2;
-			
-			local sValueCheck = aWords[1]:sub(#sType + 2);
-			if sValueCheck ~= "" then
-				table.insert(aWords, 2, sValueCheck);
-				table.insert(aWordStats, 2, { startpos = aWordStats[1].startpos + #sType + 1, endpos = aWordStats[1].endpos });
-				aWords[1] = aWords[1]:sub(1, #sType + 1);
-				aWordStats[1].endpos = #sType + 1;
-			end
-			
-			if #aWords > 1 then
-				if StringManager.isDiceString(aWords[2]) then
-					aDice, nMod = StringManager.convertStringToDice(aWords[2]);
-					nRemainderIndex = 3;
-				end
-			end
-		end
-		
-		if nRemainderIndex <= #aWords then
-			while nRemainderIndex <= #aWords and aWords[nRemainderIndex]:match("^%[%d?%a+%]$") do
-				table.insert(aRemainder, aWords[nRemainderIndex]);
-				nRemainderIndex = nRemainderIndex + 1;
-			end
-		end
-		
-		if nRemainderIndex <= #aWords then
-			local sRemainder = s:sub(aWordStats[nRemainderIndex].startpos);
-			local nStartRemainderPhrase = 1;
-			local i = 1;
-			while i < #sRemainder do
-				local sCheck = sRemainder:sub(i, i);
-				if sCheck == "," then
-					local sRemainderPhrase = sRemainder:sub(nStartRemainderPhrase, i - 1);
-					if sRemainderPhrase and sRemainderPhrase ~= "" then
-						sRemainderPhrase = StringManager.trim(sRemainderPhrase);
-						table.insert(aRemainder, sRemainderPhrase);
-					end
-					nStartRemainderPhrase = i + 1;
-				elseif sCheck == "(" then
-					while i < #sRemainder do
-						if sRemainder:sub(i, i) == ")" then
-							break;
-						end
-						i = i + 1;
-					end
-				elseif sCheck == "[" then
-					while i < #sRemainder do
-						if sRemainder:sub(i, i) == "]" then
-							break;
-						end
-						i = i + 1;
-					end
-				end
-				i = i + 1;
-			end
-			local sRemainderPhrase = sRemainder:sub(nStartRemainderPhrase, #sRemainder);
-			if sRemainderPhrase and sRemainderPhrase ~= "" then
-				sRemainderPhrase = StringManager.trim(sRemainderPhrase);
-				table.insert(aRemainder, sRemainderPhrase);
-			end
-		end
-	end
-
-	return  {
-		type = sType or "", 
-		mod = nMod, 
-		dice = aDice, 
-		remainder = aRemainder, 
-		original = StringManager.trim(s)
-	};
-end
 
 function onInit()
-	Oldroll = ActionsManager.roll;
-	ActionsManager.roll = roll;
-	
-	OldresolveAction = ActionsManager.resolveAction;
-	ActionsManager.resolveAction = resolveAction;
-	
-	ActionsManager.total = total;
+	initRegistrations();
+	initOverrides();
 end
 
-function roll(rSource, vTargets, rRoll, bMultiTarget)
-	if rRoll and rRoll.aDice then
-		if #(rRoll.aDice) > 0 then
-			rRoll.originaldicenumber = #rRoll.aDice;
-		else
-			rRoll.originaldicenumber = 0;
-		end
-		-- if (rRoll.aDice.expr or "") ~= "" then
-			-- Dice, _ = DiceManager.convertStringToDice(rRoll.aDice.expr);
-			-- rRoll.originaldicenumber = #Dice;
-		-- end
-	else
-		rRoll.originaldicenumber = 0;
+function initRegistrations()
+	ModifierManager.addModWindowPresets({ { sCategory = "general", tPresets = { "ADV", "DISADV" } } });
+	ModifierManager.addKeyExclusionSets({ { "ADV", "DISADV" } });
+
+	OptionsManager.registerOptionData({	sKey = "DISADV", sGroupRes = "option_header_DISADV", tCustom = { default = "on", }, });
+end
+
+local _fnOrigOnPreModRoll;
+local _fnOrigOnPreResolve;
+
+function initOverrides()
+	_fnOrigOnPreModRoll = GameManager.getMultiKeyFunction("onActionPreModRoll", "");
+	GameManager.setMultiKeyFunction("onActionPreModRoll", "", onPreModRoll);
+	_fnOrigOnPreResolve = GameManager.getMultiKeyFunction("onActionPreResolve", "");
+	GameManager.setMultiKeyFunction("onActionPreResolve", "", onPreResolve);
+end
+
+function onPreModRoll(rSource, rTarget, rRoll)
+	onPreModRollKelADV(rSource, rTarget, rRoll);
+
+	if _fnOrigOnPreModRoll then
+		_fnOrigOnPreModRoll(rSource, rTarget, rRoll);
 	end
-	if rRoll.originaldicenumber ~= 0 then
-		local _, nAdvantage =  hasEffect(rSource, "keladvantage");
-		local _, nDisAdvantage =  hasEffect(rSource, "keldisadvantage");
-		
-		rRoll.adv = ( tonumber(rRoll.adv) or 0 ) + nAdvantage - nDisAdvantage;
-		
-		if ModifierManager.getKey("ADV") then
-			rRoll.adv = 1;
-		elseif ModifierManager.getKey("DISADV") then
-			rRoll.adv = -1;
-		end
-		
-		if rRoll.adv > 0 then
-			local i = 1;
-			local slot = i + 1;
-			while rRoll.aDice[i] do
-				table.insert(rRoll.aDice, slot, rRoll.aDice[i]);
-				i = i + 2;
-				slot = i+1;
-			end
-		elseif rRoll.adv < 0 then
-			local i = 1;
-			local slot = i + 1;
-			while rRoll.aDice[i] do
-				table.insert(rRoll.aDice, slot, rRoll.aDice[i]);
-				i = i + 2;
-				slot = i+1;
-			end
-		end
+end
+function onPreModRollKelADV(rSource, rTarget, rRoll)
+	if not OptionsManager.isOption("DISADV", "on") then
+		return;
 	end
-	Oldroll(rSource, vTargets, rRoll, bMultiTarget);
+
+	rRoll.nKelADVDice = #(rRoll.aDice or {});
+	if rRoll.nKelADVDice == 0 then
+		return;
+	end
+
+	local nADV = #(EffectManager.getCompsDataByText(rSource, "keladvantage"));
+	local nDIS = #(EffectManager.getCompsDataByText(rSource, "keldisadvantage"));
+	rRoll.nKelADV = (rRoll.nKelADV or 0) + nADV - nDIS;
+	if ModifierManager.getKey("ADV") then
+		rRoll.nKelADV = rRoll.nKelADV + 1;
+	end
+	if ModifierManager.getKey("DISADV") then
+		rRoll.nKelADV = rRoll.nKelADV - 1;
+	end
+	if rRoll.nKelADV == 0 then
+		return;
+	end
+
+	local i = 1;
+	local slot = i + 1;
+	while rRoll.aDice[i] do
+		table.insert(rRoll.aDice, slot, rRoll.aDice[i]);
+		i = i + 2;
+		slot = i + 1;
+	end
 end 
 
-function resolveAction(rSource, rTarget, rRoll)
-	if rRoll and rRoll.aDice and ( #rRoll.aDice > 0 ) then
-		
-		rRoll.adv = tonumber(rRoll.adv) or 0;
-		
-		if rRoll.adv > 0 then
-			local i = 1;
-			local slot = i+1;
-			local sDropped = "";
-			while rRoll.aDice[i] do
-				if rRoll.aDice[i].result <= rRoll.aDice[slot].result then
-					if sDropped == "" then
-						sDropped = sDropped .. rRoll.aDice[i].result;
-					else
-						sDropped = sDropped .. ", " .. rRoll.aDice[i].result
-					end
-					table.remove(rRoll.aDice, i);
-				else
-					if sDropped == "" then
-						sDropped = sDropped .. rRoll.aDice[slot].result;
-					else
-						sDropped = sDropped .. ", " .. rRoll.aDice[slot].result
-					end
-					table.remove(rRoll.aDice, slot);
-				end
-				rRoll.aDice[i].type = "g" .. string.sub(rRoll.aDice[i].type, 2);
-				i = i + 1;
-				slot = i+1;
-			end
-			rRoll.sDesc = rRoll.sDesc .. " [ADV]" .. " [DROPPED " .. sDropped .. "]";
-			local nodeCT = ActorManager.getCTNode(rSource);
-			local sOptDISADV = OptionsManager.getOption("DISADV");
-			if sOptDISADV == "on" then
-				EffectManager.removeEffect(nodeCT, "keladvantage");
-			end
-			rRoll.aDice.expr = nil;
-		elseif rRoll.adv < 0 then
-			local i = 1;
-			local slot = i+1;
-			local sDropped = "";
-			while rRoll.aDice[i] do
-				if rRoll.aDice[i].result >= rRoll.aDice[slot].result then
-					if sDropped == "" then
-						sDropped = sDropped .. rRoll.aDice[i].result;
-					else
-						sDropped = sDropped .. ", " .. rRoll.aDice[i].result
-					end
-					table.remove(rRoll.aDice, i);
-				else
-					if sDropped == "" then
-						sDropped = sDropped .. rRoll.aDice[slot].result;
-					else
-						sDropped = sDropped .. ", " .. rRoll.aDice[slot].result
-					end
-					table.remove(rRoll.aDice, slot);
-				end
-				rRoll.aDice[i].type = "r" .. string.sub(rRoll.aDice[i].type, 2);
-				i = i + 1;
-				slot = i+1;
-			end
-			rRoll.sDesc = rRoll.sDesc .. " [DISADV]" .. " [DROPPED " .. sDropped .. "]";
-			local nodeCT = ActorManager.getCTNode(rSource);
-			local sOptDISADV = OptionsManager.getOption("DISADV");
-			if sOptDISADV == "on" then
-				EffectManager.removeEffect(nodeCT, "keldisadvantage");
-			end
-			rRoll.aDice.expr = nil;
-		end
+function onPreResolve(rSource, rTarget, rRoll)
+	onPreResolveKelADV(rSource, rTarget, rRoll);
+
+	if _fnOrigOnPreResolve then
+		_fnOrigOnPreResolve(rSource, rTarget, rRoll);
 	end
-	OldresolveAction(rSource, rTarget, rRoll);
 end
-
-function total(rRoll)
-	if Utility.getDiceTotal then
-		return Utility.getDiceTotal(rRoll.aDice) + rRoll.nMod;
+function onPreResolveKelADV(rSource, rTarget, rRoll)
+	if not OptionsManager.isOption("DISADV", "on") then
+		return;
 	end
-	
-	local nTotal = 0;
-	local corrector = {};
-	local j = 1;
 
-	for _,v in ipairs(rRoll.aDice) do
-		if not v.dropped then
-			if v.value then
-				corrector[j] = v.value;
+	if #(rRoll.aDice or {}) <= 0 then
+		return;
+	end
+
+	if (rRoll.nKelADV or 0) > 0 then
+		local i = 1;
+		local slot = i + 1;
+		local sDropped = "";
+		while rRoll.aDice[i] do
+			if rRoll.aDice[i].result <= rRoll.aDice[slot].result then
+				sDropped = StringManager.append(sDropped, tostring(rRoll.aDice[i].result));
+				table.remove(rRoll.aDice, i);
 			else
-				corrector[j] = v.result;
+				sDropped = StringManager.append(sDropped, tostring(rRoll.aDice[slot].result));
+				table.remove(rRoll.aDice, slot);
 			end
-			j = j+1;
+			rRoll.aDice[i].type = "g" .. rRoll.aDice[i].type:sub(2);
+			i = i + 1;
+			slot = i + 1;
 		end
-	end
-	if rRoll.originaldicenumber then
-		rRoll.originaldicenumber = tonumber(rRoll.originaldicenumber);
-		if rRoll.aDice and ( #rRoll.aDice > rRoll.originaldicenumber ) then
-		
-			rRoll.adv = tonumber(rRoll.adv) or 0;
-			
-			if rRoll.adv > 0 then
-				local i = 1;
-				local slot = i+1;
-				while corrector[i] do
-					if corrector[i] <= corrector[slot] then
-						table.remove(corrector, i);
-					else
-						table.remove(corrector, slot);
-					end
-					i = i + 1;
-					slot = i+1;
-				end
-			elseif rRoll.adv < 0 then
-				local i = 1;
-				local slot = i+1;
-				while corrector[i] do
-					if corrector[i] >= corrector[slot] then
-						table.remove(corrector, i);
-					else
-						table.remove(corrector, slot);
-					end
-					i = i + 1;
-					slot = i+1;
-				end
+		rRoll.sDesc = StringManager.append(rRoll.sDesc, string.format("[ADV] [DROPPED %s]", sDropped), " ");
+		rRoll.aDice.expr = nil;
+		rRoll.nTotal = ActionsManager.total(rRoll);
+	elseif (rRoll.nKelADV or 0) < 0 then
+		local i = 1;
+		local slot = i + 1;
+		local sDropped = "";
+		while rRoll.aDice[i] do
+			if rRoll.aDice[i].result >= rRoll.aDice[slot].result then
+				sDropped = StringManager.append(sDropped, tostring(rRoll.aDice[i].result));
+				table.remove(rRoll.aDice, i);
+			else
+				sDropped = StringManager.append(sDropped, tostring(rRoll.aDice[slot].result));
+				table.remove(rRoll.aDice, slot);
 			end
+			rRoll.aDice[i].type = "r" .. rRoll.aDice[i].type:sub(2);
+			i = i + 1;
+			slot = i+1;
 		end
+		rRoll.sDesc = StringManager.append(rRoll.sDesc, string.format("[DISADV] [DROPPED %s]", sDropped), " ");
+		rRoll.aDice.expr = nil;
+		rRoll.nTotal = ActionsManager.total(rRoll);
 	end
-	for i = 1, #corrector do
-		nTotal = nTotal + corrector[i];
-	end
-	nTotal = nTotal + rRoll.nMod;
-	
-	return nTotal;
 end
