@@ -1,20 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <root version="3.0" release="1">
-  <properties>
-    <name>Feature: Advantage and disadvantage effects with automatic removal</name>
-    <version>4.4.9</version>
-    <author>Kelrugem</author>
-    <description>Advantage and disadvantage effects.</description>
-	<loadorder>11</loadorder>
-  </properties>
-  <announcement text="Generic Advantage/Disadvantage, date 20 January 2024, for CoreRPG. Copyright 2024 Smiteworks. By Kelrugem.\rApply the effects keladvantage and keldisadvantage to apply advantage and disadvantage, respectively, to rolls." icon="DeekinMightyBard" font="emotefont" />
-  <base>
-	<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
-	<!-- Strings -->
-    <includefile source="strings/strings.xml" />
-	
-	<!-- Scripts -->
-	<script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
-	<script name="OptionsKel" file="scripts/data_options.lua" />
-  </base>
+	<announcement text="Generic Advantage/Disadvantage. By Kelrugem.\rApply the effects keladvantage and keldisadvantage to apply advantage and disadvantage, respectively, to rolls." icon="DeekinMightyBard" font="emotefont" />
+
+	<properties>
+		<name>Feature: Advantage and disadvantage</name>
+		<version>4.7.0</version>
+		<author>Kelrugem</author>
+		<loadorder>11</loadorder>
+	</properties>
+
+	<base>
+		<icon name="DeekinMightyBard" file="DeekinMightyBard.jpg" />
+		<includefile source="strings/strings.xml" />
+
+		<script name="ActionsManagerKel" file="scripts/manager_actions.lua" />
+	</base>
 </root>
