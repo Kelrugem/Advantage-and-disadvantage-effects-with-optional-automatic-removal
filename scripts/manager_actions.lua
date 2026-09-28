@@ -8,8 +8,6 @@ end
 function initRegistrations()
 	ModifierManager.addModWindowPresets({ { sCategory = "general", tPresets = { "ADV", "DISADV" } } });
 	ModifierManager.addKeyExclusionSets({ { "ADV", "DISADV" } });
-
-	OptionsManager.registerOptionData({	sKey = "DISADV", sGroupRes = "option_header_DISADV", tCustom = { default = "on", }, });
 end
 
 local _fnOrigOnPreModRoll;
@@ -30,10 +28,6 @@ function onPreModRoll(rSource, rTarget, rRoll)
 	end
 end
 function onPreModRollKelADV(rSource, rTarget, rRoll)
-	if not OptionsManager.isOption("DISADV", "on") then
-		return;
-	end
-
 	rRoll.nKelADVDice = #(rRoll.aDice or {});
 	if rRoll.nKelADVDice == 0 then
 		return;
@@ -69,10 +63,6 @@ function onPreResolve(rSource, rTarget, rRoll)
 	end
 end
 function onPreResolveKelADV(rSource, rTarget, rRoll)
-	if not OptionsManager.isOption("DISADV", "on") then
-		return;
-	end
-
 	if #(rRoll.aDice or {}) <= 0 then
 		return;
 	end
